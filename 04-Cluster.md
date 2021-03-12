@@ -1,4 +1,4 @@
-## Setup
+## Cluster setup
 
 - Master nodes
   - HDFS NameNode, YARN ResourceManager, and HBase Master
@@ -13,6 +13,8 @@
   - task/application workloads on slaves should be isolated from masters
   - slaves are frequently and automatically replaced
 
+### Examples
+
 - Single node setup
   - all master and slave processes on the same machine
 - 2-node setup
@@ -22,15 +24,3 @@
   - all the other nodes are slaves
   - HA cluster adds additional standby NameNode/ResourceManager node
 - Other services (Web App Proxy Server or MapReduce Job History) are either on dedicated or shared machine, depending on the load
-
-## HBase
-
-https://cwiki.apache.org/confluence/display/ZOOKEEPER/HBaseUseCases
-
-## Ambari
-- Convention over configuration
-- Setup https://cwiki.apache.org/confluence/display/AMBARI/Installation+Guide+for+Ambari+2.7.5
-  - Install prerequisites (maven >3.3.9)
-  - Fix node version in ambari-admin/pom.xml
-
-wget -nv http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.7.5.0/ambari.repo -O /etc/yum.repos.d/ambari.repo
