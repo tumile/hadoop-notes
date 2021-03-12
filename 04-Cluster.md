@@ -1,14 +1,13 @@
 ## Cluster setup
 
+- Hadoop ecosystem has a common theme: master-slave architecture (except ZK)
 - Master nodes
   - HDFS NameNode, YARN ResourceManager, and HBase Master
-  - Standby NameNode for high availability setup
-    - does checkpoint/backup node work
-    - can replace active NameNode on failure
+  - additional standby NameNode/ResourceManager for high availability setup
 - Slave nodes
   - HDFS DataNodes, YARN NodeManagers, and HBase RegionServers
   - should be co-located or co-deployed for optimal data locality
-- HBase requires ZooKeeper to manage the HBase cluster
+- HBase requires ZK to manage the HBase cluster
 - Separate master and slave nodes
   - task/application workloads on slaves should be isolated from masters
   - slaves are frequently and automatically replaced
