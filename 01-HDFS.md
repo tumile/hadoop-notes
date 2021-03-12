@@ -5,7 +5,7 @@
 - Hardware failure
   - something is always failing
   - quickly detects faults and automatically recovers
-- Big data
+- Large amount of data
   - theoretically unbounded size
   - high aggregate data bandwidth
   - volume is a built-in feature, not a challenge
@@ -19,22 +19,22 @@
 ## Concepts
 
 - Block
-  - a unit of storage (128MB), files are splitted into block-size chunks
+  - a configurable unit of storage, files are splitted into block-size chunks
   - replicated to a number of physically separate machines
-  - one replica per node
+  - only one replica per node
 - Multiple DataNodes
-  - actually store blocks of data
+  - store blocks of data, but don't know about the actual files the blocks belong to
   - serve reads/writes from client or NameNode
-    - tries to satisfy read from replica closest to the reader
-  - reports to NameNode periodically with lists of their blocks
+    - try to satisfy read from replica closest to the reader
+  - send Blockreport to NameNode periodically with list of blocks
 - NameNode: one per cluster
   - keeps metadata, filesystem namespace
     - stores locally 2 files: EditLog and FsImage
-  - knows the DataNodes on which all the blocks for a given file are located
+  - knows the DataNodes on which all the blocks for a given file are located from Blockreports
     - however does not store it persistently, because it's frequently changed
     - points client to the DataNode to read/write to
     - user data never flows through the NameNode
-  - if the namenode is obliterated, everything would be lost since there is no way to reconstruct the files from the blocks on the DataNodes
+  - if the NameNode/FsImage is gone, everything would be lost since there is no way to reconstruct the files from the blocks on the DataNodes
 - Keeping NameNode resilient
   - write NameNode state, synchronously and atomically, to multiple filesystems (NFS)
   - use Secondary NameNode/Checkpoint/Backup Node
@@ -55,7 +55,7 @@
     - two nodes use a shared storage to share edit logs: NFS filer or quorum journal manager (QJM)
   - QJM is dedicated HDFS highly available edit log (recommended)
     - has a group of journal nodes, each edit must write to a majority of nodes
-    - not using Zookeeper, though HDFS HA does use Zookeeper for master election
+    - different from Zookeeper (!), though HDFS HA does use Zookeeper for master election
 - Failover and fencing
   - transition from acitve to standby is managed by the failover controller
     - a lightweight process monitoring failures and trigger failover
@@ -90,7 +90,7 @@
 - Data integrity by checksums
   - comparing checksums on creating and retrieving files
 - Files are divided into blocks on (if possible) different DataNodes
-  - blocks are further replicated on different DataNodes
+  - blocks are further replicated on (must be) different DataNodes
 - When client writes a block to HDFS
   - NameNode returns a list of DataNodes for replication
   - client sends to the first DataNode, the first DataNode sends to the second, and so on; it's called a Write Pipeline
@@ -118,12 +118,15 @@
   - see more: https://issues.apache.org/jira/browse/HADOOP-4539
 
 ## API
+
 - Hadoop has an abstract notion of filesystems, of which HDFS is just one implementation
 - org.apache.hadoop.fs.FileSystem represents the client interface to a filesystem in Hadoop
   - there are implementations for Local, HDFS, WebHDFS, FTP, S3, Azure...
 
 ## Read flow
-- Client here loosely refers to both the user application and the client library interacting with HDFS
+
+> "Client" here loosely refers to both the user application and the client library interacting with HDFS
+
 - Client calls NameNode using RPC to get blocks locations, i.e DataNodes hosting them
 - DataNodes are sorted by their proximity to the client
   - if the client itself is a DataNode (e.g. in a MapReduce task), the local block is read first
@@ -133,6 +136,7 @@
 - NameNode merely has to service block location requests, which is very fast since it's in-memory
 
 ## Write flow
+
 - Client calls NameNode to create a new file in the filesystem namespace, with no blocks
   - NameNode checks if the file exists and the client has adequate permissions
   - NameNode makes a record of the new file
@@ -142,5 +146,6 @@
   - write is successful when a minimum number of replica is written, any missing will be asynchronously replicated
 
 ## Replica placement
-How does NameNode choose DataNodes to replicate on?
-https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html#Replica_Placement:_The_First_Baby_Steps
+
+- How does NameNode choose DataNodes to replicate on?
+  - https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html#Replica_Placement:_The_First_Baby_Steps
